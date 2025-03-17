@@ -28,3 +28,77 @@ During my college journey, we organized a Hackathon, and I played a key role in 
 # 🎥 Demo Video:
 https://github.com/user-attachments/assets/947aea5f-a4b5-4681-ba36-d983fcfbf5f2
 
+
+# Google Sheet
+function doPost(e) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    const data = e.parameter;
+    
+    // Create folder in Google Drive if it doesn't exist
+    const folderName = "Registration Form Submissions";
+    let folder = DriveApp.getFoldersByName(folderName);
+    let mainFolder;
+    
+    if (folder.hasNext()) {
+      mainFolder = folder.next();
+    } else {
+      mainFolder = DriveApp.createFolder(folderName);
+    }
+    
+    // Handle PDF upload
+    let pdfUrl = "";
+    if (data.Project_pdf) {
+      const fileBlob = Utilities.newBlob(
+        Utilities.base64Decode(data.Project_pdf.split(',')[1]),
+        'application/pdf',
+        ${data.Project_teamName}_${data.Project_projectTitle}.pdf
+      );
+      const file = mainFolder.createFile(fileBlob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      pdfUrl = file.getUrl();
+    }
+    
+    const rowData = [
+      new Date(),  // Timestamp
+      // Member 1
+      data.Member1_name,
+      data.Member1_email,
+      data.Member1_department,
+      data.Member1_phone,
+      data.Member1_year,
+      // Member 2
+      data.Member2_name,
+      data.Member2_email,
+      data.Member2_department,
+      data.Member2_phone,
+      data.Member2_year,
+      // Member 3
+      data.Member3_name,
+      data.Member3_email,
+      data.Member3_department,
+      data.Member3_phone,
+      data.Member3_year,
+      // Project Details
+      data.Project_teamName,
+      data.Project_projectTitle,
+      data.Project_topic,
+      pdfUrl  // PDF file link
+    ];
+    
+    sheet.appendRow(rowData);
+    
+    return ContentService.createTextOutput(JSON.stringify({ 
+      "result": "success",
+      "message": "Data saved successfully" 
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ 
+      "result": "error",
+      "message": error.toString()
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+  }
+}
